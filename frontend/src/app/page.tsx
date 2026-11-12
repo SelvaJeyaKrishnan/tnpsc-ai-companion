@@ -266,6 +266,7 @@ export default function Home() {
               dailyGoalMinutes={dailyGoal}
               initialSubject={timerPresetSubject}
               initialTopic={timerPresetTopic}
+              isGuestDemo={isGuestDemo}
             />
           )}
 
@@ -273,18 +274,21 @@ export default function Home() {
             <StudyPlannerTab
               onStartSessionForTopic={handleStartSessionForTopic}
               targetExam={user?.target_exam || "Group 4"}
+              isGuestDemo={isGuestDemo}
             />
           )}
 
           {currentTab === "rooms" && (
             <GroupStudyTab
               currentUserId={user?.id || 9999}
+              isGuestDemo={isGuestDemo}
+              onOpenAuthModal={() => setIsAuthModalOpen(true)}
             />
           )}
 
-          {currentTab === "analytics" && <AnalyticsTab />}
+          {currentTab === "analytics" && <AnalyticsTab isGuestDemo={isGuestDemo} />}
 
-          {currentTab === "achievements" && <AchievementsTab />}
+          {currentTab === "achievements" && <AchievementsTab isGuestDemo={isGuestDemo} />}
 
           {currentTab === "ai_tutor" && <AiTutorTab />}
 
@@ -295,9 +299,10 @@ export default function Home() {
           {currentTab === "settings" && (
             <SettingsTab
               user={user}
+              isGuestDemo={isGuestDemo}
               onUserUpdated={(u) => {
                 setUser(u);
-                refreshAllData();
+                if (!isGuestDemo) refreshAllData();
               }}
             />
           )}

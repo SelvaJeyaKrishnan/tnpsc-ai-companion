@@ -24,11 +24,13 @@ import { ExamSyllabus, StudyPlan, StudyTask } from "@/types";
 interface StudyPlannerTabProps {
   onStartSessionForTopic: (subject: string, topic: string) => void;
   targetExam: string;
+  isGuestDemo?: boolean;
 }
 
 export const StudyPlannerTab: React.FC<StudyPlannerTabProps> = ({
   onStartSessionForTopic,
   targetExam,
+  isGuestDemo = false,
 }) => {
   const [plan, setPlan] = useState<StudyPlan | null>(null);
   const [syllabus, setSyllabus] = useState<ExamSyllabus | null>(null);
@@ -51,6 +53,56 @@ export const StudyPlannerTab: React.FC<StudyPlannerTabProps> = ({
   const loadData = useCallback(async () => {
     setLoading(true);
     try {
+      if (isGuestDemo) {
+        const sylData = await getSyllabus(examType);
+        setSyllabus(sylData);
+        // Provide mock initial tasks for guest demo
+        setPlan({
+          id: 9999,
+          title: `TNPSC ${examType} Comprehensive Plan`,
+          exam_type: examType,
+          target_exam_date: examDate,
+          daily_study_hours: dailyHours,
+          total_tasks: 3,
+          completed_tasks: 1,
+          progress_percentage: 33,
+          priority_weak_subjects: weakSubjects,
+          tasks: [
+            {
+              id: 1,
+              subject: "General Tamil (பொதுத்தமிழ்)",
+              topic: "பகுதி-அ: இலக்கணம் & சந்திப்பிழை நீக்குதல்",
+              date_scheduled: new Date().toISOString().split("T")[0],
+              duration_minutes: 45,
+              priority: "high",
+              status: "completed",
+              is_revision: false,
+            },
+            {
+              id: 2,
+              subject: "Aptitude & Mental Ability",
+              topic: "Simple & Compound Interest Calculations",
+              date_scheduled: new Date().toISOString().split("T")[0],
+              duration_minutes: 60,
+              priority: "high",
+              status: "pending",
+              is_revision: false,
+            },
+            {
+              id: 3,
+              subject: "Indian Polity & Constitution",
+              topic: "Articles 12-35 (Fundamental Rights & Writs)",
+              date_scheduled: new Date(Date.now() + 86400000).toISOString().split("T")[0],
+              duration_minutes: 45,
+              priority: "medium",
+              status: "pending",
+              is_revision: true,
+            },
+          ],
+        });
+        return;
+      }
+
       const [planData, sylData] = await Promise.all([
         getStudyPlan(),
         getSyllabus(examType),
@@ -62,7 +114,7 @@ export const StudyPlannerTab: React.FC<StudyPlannerTabProps> = ({
     } finally {
       setLoading(false);
     }
-  }, [examType]);
+  }, [examType, isGuestDemo, examDate, dailyHours, weakSubjects]);
 
   useEffect(() => {
     loadData();
@@ -73,6 +125,21 @@ export const StudyPlannerTab: React.FC<StudyPlannerTabProps> = ({
     e.preventDefault();
     setGenerating(true);
     setPlannerError(null);
+
+    if (isGuestDemo) {
+      setTimeout(() => {
+        setPlan((prev) => prev ? {
+          ...prev,
+          exam_type: examType,
+          target_exam_date: examDate,
+          daily_study_hours: dailyHours,
+          priority_weak_subjects: weakSubjects,
+        } : prev);
+        setGenerating(false);
+      }, 500);
+      return;
+    }
+
     try {
       const generated = await generateStudyPlan({
         exam_type: examType,
@@ -90,7 +157,24 @@ export const StudyPlannerTab: React.FC<StudyPlannerTabProps> = ({
 
   // Toggle task completion
   const handleToggleTask = async (task: StudyTask) => {
-    const newStatus = task.status === "completed" ? "pending" : "completed";
+    const newStatus: "pending" | "completed" = task.status === "completed" ? "pending" : "completed";
+
+    if (isGuestDemo) {
+      setPlan((prev) => {
+        if (!prev) return prev;
+        const newTasks: StudyTask[] = prev.tasks.map((t) => (t.id === task.id ? { ...t, status: newStatus } : t));
+        const completed = newTasks.filter((t) => t.status === "completed").length;
+        const pct = Math.round((completed / Math.max(1, newTasks.length)) * 100);
+        return {
+          ...prev,
+          tasks: newTasks,
+          completed_tasks: completed,
+          progress_percentage: pct,
+        };
+      });
+      return;
+    }
+
     try {
       const updated = await updateStudyTask(task.id, newStatus);
       setPlan((prev) => {
@@ -115,6 +199,16 @@ export const StudyPlannerTab: React.FC<StudyPlannerTabProps> = ({
     setRebalancing(true);
     setRebalanceMsg(null);
     setPlannerError(null);
+
+    if (isGuestDemo) {
+      setTimeout(() => {
+        setRebalanceMsg("Demo schedule rebalanced cleanly.");
+        setRebalancing(false);
+        setTimeout(() => setRebalanceMsg(null), 5000);
+      }, 500);
+      return;
+    }
+
     try {
       const res = await rebalanceSchedule(plan?.id);
       setPlan(res.plan);

@@ -3,7 +3,7 @@ from typing import List, Optional
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, WebSocket, WebSocketDisconnect, status
 import jwt
 from sqlalchemy.orm import Session
-from app.auth import JWT_ALGORITHM, JWT_SECRET, get_current_user
+from app.auth import JWT_ALGORITHM, JWT_SECRET, get_current_user, get_optional_current_user
 from app.database import get_db
 from app.models import RoomParticipant, StudyRoom, User
 from app.rate_limiter import check_room_rate_limit
@@ -20,7 +20,7 @@ router = APIRouter(prefix="/api/rooms", tags=["group-study-rooms"])
 
 @router.get("", response_model=List[RoomResponse])
 def list_active_rooms(
-    user: User = Depends(get_current_user),
+    user: Optional[User] = Depends(get_optional_current_user),
     db: Session = Depends(get_db)
 ):
     rooms = (

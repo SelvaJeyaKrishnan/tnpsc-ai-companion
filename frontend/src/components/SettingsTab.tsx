@@ -8,9 +8,10 @@ import { UserProfile } from "@/types";
 interface SettingsTabProps {
   user: UserProfile | null;
   onUserUpdated: (u: UserProfile) => void;
+  isGuestDemo?: boolean;
 }
 
-export const SettingsTab: React.FC<SettingsTabProps> = ({ user, onUserUpdated }) => {
+export const SettingsTab: React.FC<SettingsTabProps> = ({ user, onUserUpdated, isGuestDemo = false }) => {
   const [fullName, setFullName] = useState(user?.full_name || "Karthik Raja");
   const [targetExam, setTargetExam] = useState(user?.target_exam || "Group 4");
   const [dailyGoal, setDailyGoal] = useState(user?.daily_goal_minutes || 120);
@@ -21,6 +22,22 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({ user, onUserUpdated })
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMessage(null);
+
+    if (isGuestDemo) {
+      if (user) {
+        onUserUpdated({
+          ...user,
+          full_name: fullName,
+          target_exam: targetExam,
+          daily_goal_minutes: dailyGoal,
+          timezone: timezone,
+        });
+      }
+      setSavedSuccess(true);
+      setTimeout(() => setSavedSuccess(false), 4000);
+      return;
+    }
+
     try {
       const updated = await updateUser({
         full_name: fullName,

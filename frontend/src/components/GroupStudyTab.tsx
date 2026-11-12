@@ -14,10 +14,14 @@ import { StudyRoom } from "@/types";
 
 interface GroupStudyTabProps {
   currentUserId: number;
+  isGuestDemo?: boolean;
+  onOpenAuthModal?: () => void;
 }
 
 export const GroupStudyTab: React.FC<GroupStudyTabProps> = ({
   currentUserId,
+  isGuestDemo = false,
+  onOpenAuthModal,
 }) => {
   const [rooms, setRooms] = useState<StudyRoom[]>([]);
   const [activeRoom, setActiveRoom] = useState<StudyRoom | null>(null);
@@ -121,6 +125,12 @@ export const GroupStudyTab: React.FC<GroupStudyTabProps> = ({
     if (!newRoomName.trim()) return;
     setCreateError(null);
 
+    if (isGuestDemo) {
+      setCreateError("Please sign in or register to create a live study room.");
+      if (onOpenAuthModal) onOpenAuthModal();
+      return;
+    }
+
     try {
       const created = await createRoom({
         name: newRoomName,
@@ -144,6 +154,13 @@ export const GroupStudyTab: React.FC<GroupStudyTabProps> = ({
   // Handle Join Room
   const handleJoinWithCode = async (code: string, pass?: string) => {
     setJoinError(null);
+
+    if (isGuestDemo) {
+      setJoinError("Please sign in or register to join an interactive study room.");
+      if (onOpenAuthModal) onOpenAuthModal();
+      return;
+    }
+
     try {
       const joined = await joinRoom(code.toUpperCase(), pass);
       setActiveRoom(joined);

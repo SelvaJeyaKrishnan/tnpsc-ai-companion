@@ -1,5 +1,6 @@
+from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException, Request, status
-from app.auth import get_current_user
+from app.auth import get_optional_current_user
 from app.models import User
 from app.rate_limiter import check_ai_rate_limit
 from app.schemas import AiChatRequest, AiChatResponse
@@ -12,7 +13,7 @@ router = APIRouter(prefix="/api/ai", tags=["ai-tutor"])
 async def ask_ai_tutor(
     payload: AiChatRequest,
     request: Request,
-    user: User = Depends(get_current_user)
+    user: Optional[User] = Depends(get_optional_current_user)
 ):
     check_ai_rate_limit(user.id if user else 0, request)
 
@@ -23,10 +24,11 @@ async def ask_ai_tutor(
             detail="Question cannot be empty or contain only whitespace"
         )
 
+    target_exam = (user.target_exam if user else None) or payload.target_exam or "Group 4"
     result = await generate_ai_tutor_response(
         message=clean_message,
         subject=payload.subject or "General Studies",
-        target_exam=user.target_exam or payload.target_exam or "Group 4",
+        target_exam=target_exam,
         history=payload.history
     )
     return AiChatResponse(

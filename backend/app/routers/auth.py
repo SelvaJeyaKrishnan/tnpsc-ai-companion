@@ -1,3 +1,4 @@
+import os
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 from sqlalchemy.orm import Session
 from app.auth import create_access_token, get_current_user, hash_password, require_current_user, verify_password
@@ -69,6 +70,14 @@ def register_user(payload: UserRegister, request: Request, db: Session = Depends
 def login_user(payload: UserLogin, request: Request, db: Session = Depends(get_db)):
     check_login_rate_limit(request)
     identifier = payload.username.strip().lower()
+
+    app_env = os.getenv("APP_ENV", "development").lower()
+    if app_env == "production" and (identifier == "karthik" or identifier == "karthik.tnpsc@example.com"):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="The default demo account login is disabled in production. Please register your own aspirant account to begin."
+        )
+
     user = db.query(User).filter(
         (User.username == identifier) | (User.email == identifier)
     ).first()

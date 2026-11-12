@@ -17,12 +17,56 @@ import {
 import { getAchievements, getStreak } from "@/lib/api";
 import { Achievement, StreakData } from "@/types";
 
-export const AchievementsTab: React.FC = () => {
+interface AchievementsTabProps {
+  isGuestDemo?: boolean;
+}
+
+export const AchievementsTab: React.FC<AchievementsTabProps> = ({ isGuestDemo = false }) => {
   const [streak, setStreak] = useState<StreakData | null>(null);
   const [achievements, setAchievements] = useState<Achievement[]>([]);
 
   useEffect(() => {
     async function loadData() {
+      if (isGuestDemo) {
+        setStreak({
+          current_streak: 2,
+          longest_streak: 5,
+          last_studied_date: new Date().toISOString().split("T")[0],
+          total_sessions: 9,
+          total_seconds: 16200,
+          today_seconds: 2400,
+          daily_goal_minutes: 120,
+          goal_completed: false,
+          weekly_consistency: [],
+          calendar_dates: [new Date().toISOString().split("T")[0]],
+        });
+        setAchievements([
+          {
+            badge_key: "first_session",
+            title: "First Step Aspirant",
+            description: "Completed your first focused study session.",
+            icon: "zap",
+            unlocked: true,
+            unlocked_at: new Date().toISOString(),
+          },
+          {
+            badge_key: "streak_3",
+            title: "Habit Builder (3 Days)",
+            description: "Maintained a consistent study streak for 3 days.",
+            icon: "flame",
+            unlocked: false,
+          },
+          {
+            badge_key: "streak_7",
+            title: "Dedication Week (7 Days)",
+            description: "One unbroken week of civil service revision.",
+            icon: "award",
+            unlocked: false,
+          },
+        ]);
+        return;
+      }
+
       try {
         const [streakData, achData] = await Promise.all([
           getStreak(),
@@ -35,7 +79,7 @@ export const AchievementsTab: React.FC = () => {
       }
     }
     loadData();
-  }, []);
+  }, [isGuestDemo]);
 
   const getBadgeIcon = (iconName: string) => {
     switch (iconName) {

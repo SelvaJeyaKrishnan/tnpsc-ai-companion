@@ -5,13 +5,51 @@ import { BarChart3 } from "lucide-react";
 import { getAnalytics } from "@/lib/api";
 import { AnalyticsSummary } from "@/types";
 
-export const AnalyticsTab: React.FC = () => {
+interface AnalyticsTabProps {
+  isGuestDemo?: boolean;
+}
+
+export const AnalyticsTab: React.FC<AnalyticsTabProps> = ({ isGuestDemo = false }) => {
   const [period, setPeriod] = useState<string>("week");
   const [startDate, setStartDate] = useState<string>("");
   const [endDate, setEndDate] = useState<string>("");
   const [analytics, setAnalytics] = useState<AnalyticsSummary | null>(null);
 
   const fetchStats = useCallback(async () => {
+    if (isGuestDemo) {
+      setAnalytics({
+        total_study_seconds: 16200,
+        total_study_hours: 4.5,
+        today_seconds: 2400,
+        weekly_seconds: 16200,
+        monthly_seconds: 48600,
+        completed_pomodoros: 6,
+        average_daily_minutes: 38,
+        consistency_percentage: 67,
+        subject_distribution: [
+          { subject: "General Tamil (பொதுத்தமிழ்)", seconds: 7200, percentage: 44.4, sessions_count: 4 },
+          { subject: "Indian Polity & Constitution", seconds: 5400, percentage: 33.3, sessions_count: 3 },
+          { subject: "Aptitude & Mental Ability", seconds: 3600, percentage: 22.3, sessions_count: 2 },
+        ],
+        most_productive_hours: Array.from({ length: 24 }, (_, i) => ({
+          hour: i,
+          label: `${String(i).padStart(2, "0")}:00`,
+          seconds: i === 6 || i === 7 || i === 19 || i === 20 ? 3600 : 0,
+        })),
+        weekly_trend: [
+          { date: "2026-11-06", day_name: "Thu", seconds: 2400, sessions_count: 1, target_met: true },
+          { date: "2026-11-07", day_name: "Fri", seconds: 3600, sessions_count: 2, target_met: true },
+          { date: "2026-11-08", day_name: "Sat", seconds: 4800, sessions_count: 2, target_met: true },
+          { date: "2026-11-09", day_name: "Sun", seconds: 1800, sessions_count: 1, target_met: false },
+          { date: "2026-11-10", day_name: "Mon", seconds: 3600, sessions_count: 2, target_met: true },
+          { date: "2026-11-11", day_name: "Tue", seconds: 4200, sessions_count: 2, target_met: true },
+          { date: "2026-11-12", day_name: "Wed", seconds: 2400, sessions_count: 1, target_met: true },
+        ],
+        filter_period: "week",
+      });
+      return;
+    }
+
     try {
       const data = await getAnalytics(
         period,
@@ -22,7 +60,7 @@ export const AnalyticsTab: React.FC = () => {
     } catch (err) {
       console.error("Failed to load analytics:", err);
     }
-  }, [period, startDate, endDate]);
+  }, [period, startDate, endDate, isGuestDemo]);
 
   useEffect(() => {
     if (period !== "custom" || (startDate && endDate)) {

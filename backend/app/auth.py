@@ -112,22 +112,48 @@ def require_current_user(
         )
 
 
+def get_optional_current_user(
+    auth: Optional[HTTPAuthorizationCredentials] = Security(security_bearer),
+    db: Session = Depends(get_db)
+) -> Optional[User]:
+    """
+    Optional authentication dependency for public endpoints (such as public AI doubts or public syllabus).
+    - If valid Bearer token provided: returns authenticated User.
+    - If invalid/expired token provided: raises 401 Unauthorized.
+    - If no token provided: returns None (guest).
+    """
+    if auth and auth.credentials:
+        return require_current_user(auth, db)
+    return None
+
+
 def get_current_user(
     auth: Optional[HTTPAuthorizationCredentials] = Security(security_bearer),
     db: Session = Depends(get_db)
 ) -> User:
     """
-    Resolves the current User:
-    1. If a valid JWT Bearer token is provided, returns that authenticated User.
-    2. If no token provided, gracefully returns the primary demo user for seamless local development.
+    Strict user authentication dependency.
+    In production (APP_ENV=production):
+      - Strictly requires a valid JWT Bearer token.
+      - Never falls back to any demo or seed user.
+    In development/testing environments (APP_ENV!=production):
+      - If a Bearer token is provided, validates it strictly.
+      - If no Bearer token is provided, provides fallback only in non-production environments.
     """
-    if auth and auth.credentials:
-        try:
-            return require_current_user(auth, db)
-        except HTTPException:
-            raise
+    app_env = os.getenv("APP_ENV", "development").lower()
 
-    # Fallback for development if no token passed
+    if auth and auth.credentials:
+        return require_current_user(auth, db)
+
+    # In production, missing credentials MUST raise 401 Unauthorized
+    if app_env == "production":
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Authentication token required for this protected endpoint",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    # Fallback only for non-production development environments when no token is passed
     user = db.query(User).filter(User.username == "karthik").first()
     if not user:
         from app.seed_data import init_seed_data

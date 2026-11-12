@@ -31,6 +31,7 @@ interface FocusTimerTabProps {
   dailyGoalMinutes: number;
   initialSubject?: string | null;
   initialTopic?: string | null;
+  isGuestDemo?: boolean;
 }
 
 export const FocusTimerTab: React.FC<FocusTimerTabProps> = ({
@@ -42,6 +43,7 @@ export const FocusTimerTab: React.FC<FocusTimerTabProps> = ({
   dailyGoalMinutes,
   initialSubject,
   initialTopic,
+  isGuestDemo = false,
 }) => {
   // Timer Mode
   const [mode, setMode] = useState<TimerMode>("pomodoro");
@@ -211,6 +213,11 @@ export const FocusTimerTab: React.FC<FocusTimerTabProps> = ({
 
     const now = new Date();
     const start = sessionStartTime ? new Date(sessionStartTime) : new Date(now.getTime() - durationSecs * 1000);
+
+    if (isGuestDemo) {
+      showToast(`[Demo] Logged ${Math.round(durationSecs / 60)}m for ${selectedSubject}!`);
+      return;
+    }
 
     try {
       await recordSession({
