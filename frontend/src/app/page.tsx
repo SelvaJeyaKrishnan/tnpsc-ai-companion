@@ -156,9 +156,10 @@ export default function Home() {
     return (
       <>
         <PortfolioLandingView
-          onEnterApp={(asGuest) => {
+          onEnterApp={(asGuest, tab) => {
             setViewMode("app");
             if (asGuest) setIsGuestDemo(true);
+            if (tab) setCurrentTab(tab);
           }}
           onOpenAuthModal={() => setIsAuthModalOpen(true)}
         />

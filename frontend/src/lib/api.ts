@@ -21,7 +21,7 @@ export function getApiBaseUrl(): string {
   if (typeof window !== "undefined") {
     // Dynamic fallback for temporary staging tunnels
     if (window.location.hostname.endsWith(".loca.lt")) {
-      return "https://eleven-carrots-do.loca.lt";
+      return "https://fast-frogs-film.loca.lt";
     }
   }
   return "http://localhost:8000";

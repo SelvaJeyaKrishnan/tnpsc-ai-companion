@@ -28,7 +28,7 @@ import {
 import { TabKey } from "./Sidebar";
 
 interface PortfolioLandingViewProps {
-  onEnterApp: (asGuest?: boolean) => void;
+  onEnterApp: (asGuest?: boolean, tab?: TabKey) => void;
   onOpenAuthModal: () => void;
 }
 
@@ -307,7 +307,7 @@ export const PortfolioLandingView: React.FC<PortfolioLandingViewProps> = ({
               </h2>
             </div>
             <button
-              onClick={() => onEnterApp(true)}
+              onClick={() => onEnterApp(true, activePreviewTab)}
               className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold shadow-md shadow-blue-600/30 transition-all shrink-0"
             >
               <span>Launch Full Workspace</span>
@@ -401,7 +401,7 @@ export const PortfolioLandingView: React.FC<PortfolioLandingViewProps> = ({
                     <strong>Recommended Priority:</strong> General Tamil (பகுதி-அ: இலக்கணம்) & Aptitude (Percentage & Ratios).
                   </div>
                   <button
-                    onClick={() => onEnterApp(true)}
+                    onClick={() => onEnterApp(true, "dashboard")}
                     className="px-3.5 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold shrink-0 ml-3"
                   >
                     Open in Workspace →
@@ -437,14 +437,14 @@ export const PortfolioLandingView: React.FC<PortfolioLandingViewProps> = ({
                   </div>
                   <div className="flex items-center gap-3 mt-6">
                     <button
-                      onClick={() => onEnterApp(true)}
+                      onClick={() => onEnterApp(true, "timer")}
                       className="px-6 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold flex items-center gap-2 shadow-lg shadow-blue-600/30"
                     >
                       <Play className="w-4 h-4 fill-current" />
                       <span>Start Focus in App</span>
                     </button>
                     <button
-                      onClick={() => onEnterApp(true)}
+                      onClick={() => onEnterApp(true, "timer")}
                       className="px-4 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-300 text-xs font-semibold border border-slate-700"
                     >
                       Fullscreen Focus Mode
@@ -479,9 +479,17 @@ export const PortfolioLandingView: React.FC<PortfolioLandingViewProps> = ({
                       1. Right to Equality (Art. 14-18), 2. Right to Freedom (Art. 19-22), 3. Right against Exploitation (Art. 23-24),
                       4. Right to Freedom of Religion (Art. 25-28), 5. Cultural and Educational Rights (Art. 29-30), and 6. Right to Constitutional Remedies (Art. 32 — termed the &ldquo;Heart and Soul&rdquo; by Dr. B.R. Ambedkar).
                     </p>
-                    <div className="pt-2 border-t border-slate-800 text-[11px] text-slate-400 flex items-center gap-1.5">
-                      <BookOpen className="w-3.5 h-3.5 text-blue-400" />
-                      <span><strong>Sources Cited:</strong> SCERT Standard 10 Social Science (Civics Unit 1) & Standard 12 Political Science.</span>
+                    <div className="pt-2 border-t border-slate-800 text-[11px] text-slate-400 flex items-center justify-between">
+                      <div className="flex items-center gap-1.5">
+                        <BookOpen className="w-3.5 h-3.5 text-blue-400" />
+                        <span><strong>Sources Cited:</strong> SCERT Standard 10 Social Science (Civics Unit 1) & Standard 12 Political Science.</span>
+                      </div>
+                      <button
+                        onClick={() => onEnterApp(true, "ai_tutor")}
+                        className="px-3 py-1 rounded-lg bg-purple-600 hover:bg-purple-500 text-white font-bold text-xs"
+                      >
+                        Ask AI Tutor →
+                      </button>
                     </div>
                   </div>
                 </div>
@@ -752,7 +760,7 @@ export const PortfolioLandingView: React.FC<PortfolioLandingViewProps> = ({
                       <CheckCircle2 className="w-3.5 h-3.5" /> Fully Functional
                     </span>
                     <button
-                      onClick={() => onEnterApp(true)}
+                      onClick={() => onEnterApp(true, feat.badge === "Regain-Inspired" ? "timer" : "dashboard")}
                       className="text-xs font-bold text-blue-400 hover:text-blue-300"
                     >
                       Try Feature →
