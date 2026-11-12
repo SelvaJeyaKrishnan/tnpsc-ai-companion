@@ -1,9 +1,16 @@
 import os
 from sqlalchemy import create_engine, event
 from sqlalchemy.orm import declarative_base, sessionmaker
+from sqlalchemy.pool import NullPool
 
 # Resolve Database URL from environment or default to local SQLite
 DATABASE_URL = os.getenv("DATABASE_URL", "").strip()
+
+# Normalize postgres:// and postgresql:// to postgresql+psycopg2://
+if DATABASE_URL.startswith("postgres://"):
+    DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql+psycopg2://", 1)
+elif DATABASE_URL.startswith("postgresql://") and not DATABASE_URL.startswith("postgresql+"):
+    DATABASE_URL = DATABASE_URL.replace("postgresql://", "postgresql+psycopg2://", 1)
 
 if not DATABASE_URL:
     DATA_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "data")
@@ -25,11 +32,11 @@ if DATABASE_URL.startswith("sqlite"):
         cursor.execute("PRAGMA foreign_keys=ON")
         cursor.close()
 else:
+    # Optimized for serverless environments (Vercel Functions) and Neon PgBouncer
     engine = create_engine(
         DATABASE_URL,
-        pool_pre_ping=True,
-        pool_size=10,
-        max_overflow=20
+        poolclass=NullPool,
+        pool_pre_ping=True
     )
 
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)

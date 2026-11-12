@@ -14,6 +14,11 @@ config = context.config
 # Allow environment variable DATABASE_URL to override alembic.ini
 env_db_url = os.getenv("DATABASE_URL", "").strip()
 if env_db_url:
+    # Normalize postgres:// and postgresql:// to postgresql+psycopg2://
+    if env_db_url.startswith("postgres://"):
+        env_db_url = env_db_url.replace("postgres://", "postgresql+psycopg2://", 1)
+    elif env_db_url.startswith("postgresql://") and not env_db_url.startswith("postgresql+"):
+        env_db_url = env_db_url.replace("postgresql://", "postgresql+psycopg2://", 1)
     config.set_main_option("sqlalchemy.url", env_db_url)
 
 # Interpret the config file for Python logging.
