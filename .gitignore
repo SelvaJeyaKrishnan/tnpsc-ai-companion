@@ -24,6 +24,9 @@ env/
 .env.*
 !.env.example
 !.env.local.example
+!.env.production.example
+!backend/.env.production.example
+!frontend/.env.production.example
 
 # Editors and OS
 .vscode/*
