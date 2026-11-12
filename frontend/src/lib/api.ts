@@ -14,14 +14,18 @@ import {
 } from "@/types";
 
 export function getApiBaseUrl(): string {
-  // If explicitly configured via NEXT_PUBLIC_API_BASE_URL (production deployments), prioritize it
-  if (process.env.NEXT_PUBLIC_API_BASE_URL) {
+  // If explicitly configured via NEXT_PUBLIC_API_BASE_URL, use it
+  if (process.env.NEXT_PUBLIC_API_BASE_URL !== undefined && process.env.NEXT_PUBLIC_API_BASE_URL !== null) {
     return process.env.NEXT_PUBLIC_API_BASE_URL;
   }
   if (typeof window !== "undefined") {
     // Dynamic fallback for temporary staging tunnels
     if (window.location.hostname.endsWith(".loca.lt")) {
       return "https://fast-frogs-film.loca.lt";
+    }
+    // In browser production deployments (e.g. Vercel Multi-Service), use same-origin relative paths ("")
+    if (window.location.hostname !== "localhost" && window.location.hostname !== "127.0.0.1") {
+      return "";
     }
   }
   return "http://localhost:8000";
