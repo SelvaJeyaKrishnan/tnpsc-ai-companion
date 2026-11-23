@@ -3,7 +3,8 @@ from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from app.database import Base, SessionLocal, engine
-from app.routers import ai, analytics, auth, rooms, scheduler, sessions, streaks
+from app import exam_models  # Register examination tables before metadata initialization
+from app.routers import ai, analytics, auth, rooms, scheduler, sessions, streaks, exams
 from app.seed_data import init_seed_data
 
 
@@ -68,6 +69,7 @@ app.include_router(analytics.router)
 app.include_router(rooms.router)
 app.include_router(scheduler.router)
 app.include_router(ai.router)
+app.include_router(exams.router)
 
 
 @app.get("/", tags=["system"])
