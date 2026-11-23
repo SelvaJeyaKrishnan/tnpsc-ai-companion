@@ -87,6 +87,7 @@ class TestQuestion(Base):
     test_id = Column(Integer, ForeignKey("exam_tests.id", ondelete="CASCADE"), nullable=False, index=True)
     question_id = Column(Integer, ForeignKey("exam_questions.id"), nullable=False)
     position = Column(Integer, nullable=False)
+    question = relationship("Question")
     __table_args__ = (UniqueConstraint("test_id", "position", name="uq_test_question_position"), UniqueConstraint("test_id", "question_id", name="uq_test_question")) 
 
 class TestAttempt(Base):
