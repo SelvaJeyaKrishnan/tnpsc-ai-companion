@@ -121,3 +121,35 @@ def submit_attempt(attempt_id: int, db: Session = Depends(get_db), user: User = 
     return {"attempt_id": attempt.id, "status": "submitted", "result": {"score": score, "max_marks": max_marks,
         "correct": correct, "wrong": wrong, "unanswered": unanswered, "accuracy": result.accuracy,
         "percentage": result.percentage}}
+
+
+@router.get("/attempts/{attempt_id}/result")
+def get_result(attempt_id: int, db: Session = Depends(get_db), user: User = Depends(get_current_user)):
+    attempt = _owned_attempt(db, attempt_id, user.id)
+    if attempt.status != "submitted":
+        raise HTTPException(409, "Submit the attempt before viewing its result")
+    result = db.query(TestResult).filter_by(attempt_id=attempt.id).first()
+    if not result:
+        raise HTTPException(404, "Result not found")
+    return {"attempt_id": attempt.id, "score": result.score, "max_marks": result.max_marks,
+            "correct": result.correct_count, "wrong": result.wrong_count,
+            "unanswered": result.unanswered_count, "accuracy": result.accuracy,
+            "percentage": result.percentage, "duration_seconds": result.duration_seconds}
+
+@router.get("/attempts/{attempt_id}/review")
+def review_attempt(attempt_id: int, db: Session = Depends(get_db), user: User = Depends(get_current_user)):
+    attempt = _owned_attempt(db, attempt_id, user.id)
+    if attempt.status != "submitted":
+        raise HTTPException(409, "Answer review is available after submission")
+    test = db.query(ExamTest).options(joinedload(ExamTest.questions).joinedload(TestQuestion.question).joinedload(Question.options)).filter_by(id=attempt.test_id).first()
+    answers = {a.question_id: a for a in db.query(AttemptAnswer).filter_by(attempt_id=attempt.id).all()}
+    review = []
+    for tq in test.questions:
+        q = tq.question
+        saved = answers.get(q.id)
+        correct_option = next((o.id for o in q.options if o.is_correct), None)
+        review.append({"question_id": q.id, "prompt": q.prompt,
+            "options": [{"id": o.id, "text": o.text} for o in q.options],
+            "selected_option_id": saved.selected_option_id if saved else None,
+            "correct_option_id": correct_option, "explanation": q.explanation})
+    return {"attempt_id": attempt.id, "review": review}
