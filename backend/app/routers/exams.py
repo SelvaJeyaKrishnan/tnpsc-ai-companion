@@ -71,7 +71,8 @@ def get_attempt(attempt_id: int, db: Session = Depends(get_db), user: User = Dep
 def save_answer(attempt_id: int, payload: AnswerUpdate, db: Session = Depends(get_db), user: User = Depends(get_current_user)):
     attempt = _owned_attempt(db, attempt_id, user.id)
     now = datetime.now(timezone.utc)
-    if attempt.status != "in_progress" or now >= attempt.expires_at:
+    expiry = attempt.expires_at if attempt.expires_at.tzinfo else attempt.expires_at.replace(tzinfo=timezone.utc)
+    if attempt.status != "in_progress" or now >= expiry:
         raise HTTPException(409, "Attempt is no longer accepting answers")
     membership = db.query(TestQuestion).filter_by(test_id=attempt.test_id, question_id=payload.question_id).first()
     if not membership: raise HTTPException(400, "Question does not belong to this test")
@@ -112,7 +113,9 @@ def submit_attempt(attempt_id: int, db: Session = Depends(get_db), user: User = 
     total = len(test_questions)
     score = correct * config["positive"] - wrong * config["negative"] + unanswered * config["unanswered"]
     max_marks = total * config["positive"]
-    elapsed = max(0, int((min(now, attempt.expires_at) - attempt.started_at).total_seconds()))
+    started = attempt.started_at if attempt.started_at.tzinfo else attempt.started_at.replace(tzinfo=timezone.utc)
+    expiry = attempt.expires_at if attempt.expires_at.tzinfo else attempt.expires_at.replace(tzinfo=timezone.utc)
+    elapsed = max(0, int((min(now, expiry) - started).total_seconds()))
     result = TestResult(attempt_id=attempt.id, score=score, max_marks=max_marks, correct_count=correct,
         wrong_count=wrong, unanswered_count=unanswered, accuracy=(correct / max(1, correct + wrong)) * 100,
         percentage=(score / max_marks * 100) if max_marks else 0, duration_seconds=elapsed)
