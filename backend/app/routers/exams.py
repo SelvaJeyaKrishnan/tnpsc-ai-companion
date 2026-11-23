@@ -29,10 +29,11 @@ def list_exams(db: Session = Depends(get_db), user: User = Depends(get_current_u
 
 @router.get("/tests")
 def list_tests(exam_id: Optional[int] = None, test_type: Optional[str] = None,
-               db: Session = Depends(get_db), user: User = Depends(get_current_user)):
+               subject_id: Optional[int] = None, db: Session = Depends(get_db), user: User = Depends(get_current_user)):
     q = db.query(ExamTest).filter_by(is_published=True)
     if exam_id: q = q.filter(ExamTest.exam_id == exam_id)
     if test_type: q = q.filter(ExamTest.test_type == test_type)
+    if subject_id: q = q.filter(ExamTest.subject_id == subject_id)
     return [{"id": t.id, "exam_id": t.exam_id, "title": t.title, "test_type": t.test_type,
              "duration_minutes": t.duration_minutes, "question_count": len(t.questions)}
             for t in q.order_by(ExamTest.id.desc()).all()]
@@ -41,6 +42,14 @@ def list_tests(exam_id: Optional[int] = None, test_type: Optional[str] = None,
 def start_attempt(test_id: int, db: Session = Depends(get_db), user: User = Depends(get_current_user)):
     test = db.query(ExamTest).options(joinedload(ExamTest.questions)).filter_by(id=test_id, is_published=True).first()
     if not test: raise HTTPException(404, "Published test not found")
+    if not test.questions:
+        raise HTTPException(409, "This test has no questions")
+    for test_question in test.questions:
+        question = test_question.question
+        if not question.is_active or question.status not in {"reviewed", "verified"}:
+            raise HTTPException(409, "This test contains a question that is not approved for delivery")
+        if len(question.options) < 2 or sum(1 for option in question.options if option.is_correct) != 1:
+            raise HTTPException(409, "This test contains a question with an invalid answer key")
     config = db.query(ExamConfiguration).filter_by(id=test.configuration_id, is_active=True).first()
     if not config: raise HTTPException(409, "Test scoring configuration is unavailable")
     now = datetime.now(timezone.utc)
