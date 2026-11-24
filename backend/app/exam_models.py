@@ -79,19 +79,26 @@ class ExamTest(Base):
     duration_minutes = Column(Integer, nullable=False)
     instructions = Column(Text)
     is_published = Column(Boolean, default=False, nullable=False)
-    questions = relationship("TestQuestion", cascade="all, delete-orphan", order_by="TestQuestion.position")
+    questions = relationship("ExamTestQuestion", cascade="all, delete-orphan", order_by="ExamTestQuestion.position")
 
-class TestQuestion(Base):
-    __tablename__ = "test_questions"
+class ExamTestQuestion(Base):
+    __tablename__ = "exam_test_questions"
+    __test__ = False
     id = Column(Integer, primary_key=True)
     test_id = Column(Integer, ForeignKey("exam_tests.id", ondelete="CASCADE"), nullable=False, index=True)
     question_id = Column(Integer, ForeignKey("exam_questions.id"), nullable=False)
     position = Column(Integer, nullable=False)
     question = relationship("Question")
-    __table_args__ = (UniqueConstraint("test_id", "position", name="uq_test_question_position"), UniqueConstraint("test_id", "question_id", name="uq_test_question")) 
+    __table_args__ = (
+        UniqueConstraint("test_id", "position", name="uq_test_question_position"),
+        UniqueConstraint("test_id", "question_id", name="uq_test_question"),
+    )
 
-class TestAttempt(Base):
-    __tablename__ = "test_attempts"
+TestQuestion = ExamTestQuestion
+
+class ExamTestAttempt(Base):
+    __tablename__ = "exam_test_attempts"
+    __test__ = False
     id = Column(Integer, primary_key=True)
     user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
     test_id = Column(Integer, ForeignKey("exam_tests.id"), nullable=False, index=True)
@@ -104,10 +111,12 @@ class TestAttempt(Base):
     answers = relationship("AttemptAnswer", cascade="all, delete-orphan")
     result = relationship("TestResult", uselist=False, cascade="all, delete-orphan")
 
+TestAttempt = ExamTestAttempt
+
 class AttemptAnswer(Base):
     __tablename__ = "attempt_answers"
     id = Column(Integer, primary_key=True)
-    attempt_id = Column(Integer, ForeignKey("test_attempts.id", ondelete="CASCADE"), nullable=False, index=True)
+    attempt_id = Column(Integer, ForeignKey("exam_test_attempts.id", ondelete="CASCADE"), nullable=False, index=True)
     question_id = Column(Integer, ForeignKey("exam_questions.id"), nullable=False)
     selected_option_id = Column(Integer, ForeignKey("question_options.id"))
     marked_for_review = Column(Boolean, default=False, nullable=False)
@@ -116,8 +125,9 @@ class AttemptAnswer(Base):
 
 class TestResult(Base):
     __tablename__ = "test_results"
+    __test__ = False
     id = Column(Integer, primary_key=True)
-    attempt_id = Column(Integer, ForeignKey("test_attempts.id", ondelete="CASCADE"), unique=True, nullable=False)
+    attempt_id = Column(Integer, ForeignKey("exam_test_attempts.id", ondelete="CASCADE"), unique=True, nullable=False)
     score = Column(Float, nullable=False)
     max_marks = Column(Float, nullable=False)
     correct_count = Column(Integer, nullable=False)
